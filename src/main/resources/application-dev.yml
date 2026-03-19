@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  cache:
+    type: simple
+
+management:
+  endpoint:
+    health:
+      show-details: always

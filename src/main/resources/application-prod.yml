@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  cache:
+    type: redis
+
+management:
+  endpoint:
+    health:
+      show-details: when_authorized
