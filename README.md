@@ -44,6 +44,18 @@ This starts PostgreSQL, Redis, Prometheus, and Grafana.
 
 ## 3) Run the Application
 
+Make sure the required environment variables are set in the current shell before starting the app. If they are missing, Spring will fail at startup while connecting to PostgreSQL.
+
+On PowerShell, for example:
+
+```powershell
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="postgres"
+$env:APP_USERNAME="admin"
+$env:APP_PASSWORD="admin123"
+$env:JWT_SECRET="replace-with-a-32-char-minimum-secret"
+```
+
 ```bash
 mvn spring-boot:run
 ```

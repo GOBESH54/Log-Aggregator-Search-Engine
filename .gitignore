@@ -1,12 +1,31 @@
+# Java
 target/
 !.mvn/wrapper/maven-wrapper.jar
 *.class
-*.log
 *.jar
 *.war
 *.ear
+
+# Maven local cache
+.m2/
+.m2-alt/
+
+# IDE
 .idea/
 *.iml
 .vscode/
 .DS_Store
+
+# Logs & temp
+*.log
+error.txt
+
+# Env
 .env
+
+# Node
+node_modules/
+dist/
+
+# Frontend build
+frontend/dist/
