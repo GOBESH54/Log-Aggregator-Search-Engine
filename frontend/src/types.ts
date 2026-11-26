@@ -1,5 +1,5 @@
 export interface LogEntry {
-  id: string;
+  id: number;
   source: string;
   level: 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'TRACE';
   message: string;
@@ -17,17 +17,12 @@ export interface LogIngestRequest {
 export interface LogSearchRequest {
   searchText?: string;
   semanticQuery?: string;
+  semanticTopK?: number;
+  semanticSearch?: boolean;
   source?: string;
   level?: string;
   startTime?: string;
   endTime?: string;
   page?: number;
   size?: number;
-}
-
-export interface AiAnalysisResult {
-  summary?: string;
-  anomalies?: string[];
-  recommendations?: string[];
-  rawResponse?: string;
 }

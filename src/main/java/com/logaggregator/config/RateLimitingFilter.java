@@ -68,8 +68,7 @@ public class RateLimitingFilter implements WebFilter {
     }
 
     private boolean isPublicPath(String path) {
-        return "/api/auth/login".equals(path)
-                || path.startsWith("/actuator/health")
+        return path.startsWith("/actuator/health")
                 || "/actuator/info".equals(path)
                 || "/actuator/prometheus".equals(path);
     }

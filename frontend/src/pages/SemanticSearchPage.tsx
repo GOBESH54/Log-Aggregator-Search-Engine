@@ -5,19 +5,25 @@ import LogTable from '../components/LogTable';
 
 export default function SemanticSearchPage() {
   const [query, setQuery] = useState('');
-  const [topK, setTopK] = useState(20);
+  const [topK, setTopK] = useState('20');
   const [results, setResults] = useState<LogEntry[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const search = async () => {
-    if (!query.trim()) return;
+    const limit = Number(topK);
+    if (loading || !query.trim()) return;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      setError('Enter a result limit between 1 and 100.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
       const { data } = await logsApi.semanticSearch({
         semanticQuery: query,
-        semanticTopK: topK,
+        semanticTopK: limit,
+        size: limit,
         semanticSearch: true,
       });
       setResults(data);
@@ -35,6 +41,8 @@ export default function SemanticSearchPage() {
         <div className="form-row">
           <input
             placeholder="Natural language query (e.g. database connection errors)"
+            aria-label="Semantic search query"
+            maxLength={300}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && search()}
@@ -43,10 +51,11 @@ export default function SemanticSearchPage() {
           <input
             type="number"
             placeholder="Top K"
+            aria-label="Result limit"
             value={topK}
             min={1}
             max={100}
-            onChange={(e) => setTopK(Number(e.target.value))}
+            onChange={(e) => setTopK(e.target.value)}
             style={{ flex: 0.5, minWidth: 80 }}
           />
           <button onClick={search} disabled={loading || !query.trim()}>

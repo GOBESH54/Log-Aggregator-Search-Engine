@@ -1,6 +1,8 @@
 package com.logaggregator.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @ConfigurationProperties(prefix = "log")
 public class LogProperties {
@@ -79,7 +81,23 @@ public class LogProperties {
     }
 
     public static class Ai {
+        private boolean enabled = true;
         private Anomaly anomaly = new Anomaly();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public void requireEnabled() {
+            if (!enabled) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "AI features are disabled on this server. Keyword search and log ingestion are available.");
+            }
+        }
 
         public Anomaly getAnomaly() {
             return anomaly;

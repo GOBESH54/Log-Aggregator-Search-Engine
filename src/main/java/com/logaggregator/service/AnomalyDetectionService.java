@@ -45,6 +45,7 @@ public class AnomalyDetectionService {
 
     @Transactional
     public void runHourlyAnomalyScan() {
+        logProperties.getAi().requireEnabled();
         LocalDateTime windowEnd = LocalDateTime.now();
         LocalDateTime windowStart = windowEnd.minusHours(1);
 

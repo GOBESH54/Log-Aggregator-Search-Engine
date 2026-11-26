@@ -1,17 +1,16 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { streamAnalysis } from '../api/analysis';
 
 export default function AnalyzePage() {
-  const [logsText, setLogsText] = useState('');
-  const [query, setQuery] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [stream, setStream] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const analyze = async () => {
-    const logs = logsText.split('\n').map((l) => l.trim()).filter(Boolean);
-    if (!logs.length) return;
-
     setError('');
     setStream('');
     setLoading(true);
@@ -20,64 +19,45 @@ export default function AnalyzePage() {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
-    const token = localStorage.getItem('jwt');
-
     try {
-      const res = await fetch('/api/logs/analyze/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ logs, query: query || undefined }),
-        signal: ctrl.signal,
+      await streamAnalysis(searchText, prompt, ctrl.signal, (chunk) => {
+        setStream((text) => text + chunk);
       });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        // SSE format: "data: ...\n\n"
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data:')) {
-            setStream((prev) => prev + line.slice(5));
-          }
-        }
-      }
     } catch (e: unknown) {
-      if ((e as Error).name !== 'AbortError') {
-        setError((e as Error).message ?? 'Analysis failed');
+      if (!ctrl.signal.aborted) {
+        setError(e instanceof Error ? e.message : 'Analysis failed');
       }
     } finally {
-      setLoading(false);
+      if (abortRef.current === ctrl) {
+        abortRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
-  const stop = () => { abortRef.current?.abort(); setLoading(false); };
+  const stop = () => abortRef.current?.abort();
 
   return (
     <div className="page">
       <h1>AI Log Analysis</h1>
       <div className="card">
         <textarea
-          placeholder="Paste log lines here (one per line)"
-          value={logsText}
-          onChange={(e) => setLogsText(e.target.value)}
+          aria-label="Analysis question"
+          placeholder="What would you like to know about your stored logs?"
+          maxLength={2000}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
           style={{ minHeight: 140 }}
         />
         <div className="form-row" style={{ marginTop: '0.75rem' }}>
           <input
-            placeholder="Optional query / focus (e.g. why did the service crash?)"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Log search text"
+            placeholder="Optional search text (e.g. connection timeout)"
+            maxLength={300}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
-          <button onClick={analyze} disabled={loading || !logsText.trim()}>
+          <button onClick={analyze} disabled={loading}>
             {loading ? 'Analyzing…' : 'Analyze'}
           </button>
           {loading && (

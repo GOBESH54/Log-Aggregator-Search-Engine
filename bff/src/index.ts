@@ -14,8 +14,8 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 // Proxy all /api/* to Spring Boot
 app.use(
-  '/api',
   createProxyMiddleware({
+    pathFilter: '/api',
     target: SPRING_BASE_URL,
     changeOrigin: true,
     // SSE: disable buffering for streaming endpoints

@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: log-aggregator
   datasource:
@@ -50,6 +52,7 @@ log:
   batch:
     size: ${LOG_BATCH_SIZE:1000}
   ai:
+    enabled: ${LOG_AI_ENABLED:true}
     anomaly:
       cron: ${LOG_AI_ANOMALY_CRON:0 0 * * * ?}
       max-chunk-chars: ${LOG_AI_ANOMALY_MAX_CHUNK_CHARS:12000}

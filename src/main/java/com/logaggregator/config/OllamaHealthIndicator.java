@@ -1,6 +1,7 @@
 package com.logaggregator.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
 import org.springframework.boot.actuate.health.Status;
@@ -10,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Component("ollama")
+@ConditionalOnProperty(name = "log.ai.enabled", havingValue = "true", matchIfMissing = true)
 public class OllamaHealthIndicator implements ReactiveHealthIndicator {
 
     private final WebClient webClient;

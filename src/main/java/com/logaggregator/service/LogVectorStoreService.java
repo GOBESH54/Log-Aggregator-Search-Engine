@@ -11,6 +11,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -101,14 +103,14 @@ public class LogVectorStoreService {
 
         int page = request.getPage() != null && request.getPage() >= 0 ? request.getPage() : 0;
         int size = request.getSize() != null && request.getSize() > 0 ? request.getSize() : 100;
-        int offset = page * size;
+        long offset = (long) page * size;
 
         if (offset >= orderedLogs.size()) {
             return Collections.emptyList();
         }
 
-        int endIndex = Math.min(offset + size, orderedLogs.size());
-        return orderedLogs.subList(offset, endIndex);
+        int endIndex = (int) Math.min(offset + size, orderedLogs.size());
+        return orderedLogs.subList((int) offset, endIndex);
     }
 
     private Document toDocument(LogEntry logEntry) {
@@ -126,7 +128,8 @@ public class LogVectorStoreService {
                 safe(logEntry.getMessage()),
                 safe(logEntry.getMetadata()));
 
-        return new Document("log-" + logEntry.getId(), content, metadata);
+        String id = UUID.nameUUIDFromBytes(("log-" + logEntry.getId()).getBytes(StandardCharsets.UTF_8)).toString();
+        return new Document(id, content, metadata);
     }
 
     private Long extractLogId(Document document) {

@@ -1,5 +1,6 @@
 package com.logaggregator.service;
 
+import com.logaggregator.config.LogProperties;
 import com.logaggregator.model.AiLogAnalysisRequest;
 import com.logaggregator.model.AiLogAnalysisResult;
 import com.logaggregator.model.LogEntry;
@@ -24,13 +25,16 @@ public class LogAnalysisService {
 
     private final LogService logService;
     private final ChatClient chatClient;
+    private final LogProperties logProperties;
 
-    public LogAnalysisService(LogService logService, ChatClient.Builder chatClientBuilder) {
+    public LogAnalysisService(LogService logService, ChatClient.Builder chatClientBuilder, LogProperties logProperties) {
         this.logService = logService;
         this.chatClient = chatClientBuilder.build();
+        this.logProperties = logProperties;
     }
 
     public AiLogAnalysisResult analyzeLogsStructured(AiLogAnalysisRequest request) {
+        logProperties.getAi().requireEnabled();
         log.info("Fetching logs for structured AI analysis...");
         List<LogEntry> logs = fetchLogsForAnalysis(request);
 
@@ -56,6 +60,7 @@ public class LogAnalysisService {
     }
 
     public Flux<String> streamLogAnalysis(AiLogAnalysisRequest request) {
+        logProperties.getAi().requireEnabled();
         return Mono.fromCallable(() -> fetchLogsForAnalysis(request))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(logs -> {

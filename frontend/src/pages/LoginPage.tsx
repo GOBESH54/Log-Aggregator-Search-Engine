@@ -19,8 +19,8 @@ export default function LoginPage() {
       const { data } = await authApi.login(username, password);
       login(data.token);
       navigate('/');
-    } catch {
-      setError('Invalid credentials');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Sign-in failed.');
     } finally {
       setLoading(false);
     }
@@ -34,6 +34,8 @@ export default function LoginPage() {
           <div className="form-row" style={{ flexDirection: 'column' }}>
             <input
               placeholder="Username"
+              aria-label="Username"
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -41,6 +43,8 @@ export default function LoginPage() {
             <input
               type="password"
               placeholder="Password"
+              aria-label="Password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

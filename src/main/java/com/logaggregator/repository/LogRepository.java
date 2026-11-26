@@ -13,11 +13,11 @@ import java.util.List;
 public interface LogRepository extends JpaRepository<LogEntry, Long> {
     
     @Query(value = "SELECT * FROM logs WHERE " +
-           "(:searchText IS NULL OR to_tsvector('english', message) @@ plainto_tsquery('english', :searchText)) " +
-           "AND (:source IS NULL OR source = :source) " +
-           "AND (:level IS NULL OR level = :level) " +
+           "(CAST(:searchText AS text) IS NULL OR to_tsvector('english', message) @@ plainto_tsquery('english', :searchText)) " +
+           "AND (CAST(:source AS text) IS NULL OR source = :source) " +
+           "AND (CAST(:level AS text) IS NULL OR level = :level) " +
            "AND timestamp BETWEEN :startTime AND :endTime " +
-           "ORDER BY timestamp DESC LIMIT :limit OFFSET :offset", 
+           "ORDER BY timestamp DESC, id DESC LIMIT :limit OFFSET :offset",
            nativeQuery = true)
     List<LogEntry> searchLogs(
         @Param("searchText") String searchText,
@@ -26,7 +26,7 @@ public interface LogRepository extends JpaRepository<LogEntry, Long> {
         @Param("startTime") LocalDateTime startTime,
         @Param("endTime") LocalDateTime endTime,
         @Param("limit") int limit,
-        @Param("offset") int offset
+        @Param("offset") long offset
     );
 
     List<LogEntry> findByIdIn(List<Long> ids);

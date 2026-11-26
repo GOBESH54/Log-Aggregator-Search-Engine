@@ -9,4 +9,4 @@ spring:
 log:
   ai:
     anomaly:
-      cron: "0 0 0 1 1 ? 2099"
+      cron: "-"

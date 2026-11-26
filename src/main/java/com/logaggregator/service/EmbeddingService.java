@@ -1,13 +1,10 @@
 package com.logaggregator.service;
 
-import com.logaggregator.model.LogEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Service
 public class EmbeddingService {
@@ -21,12 +18,12 @@ public class EmbeddingService {
     }
 
     @Async("embeddingExecutor")
-    public CompletableFuture<Void> indexLogsAsync(List<LogEntry> logs) {
+    @TransactionalEventListener
+    public void indexLogsAsync(LogService.LogsIngested event) {
         try {
-            logVectorStoreService.indexLogs(logs);
+            logVectorStoreService.indexLogs(event.entries());
         } catch (Exception ex) {
             log.error("Log ingestion succeeded but embedding indexing failed", ex);
         }
-        return CompletableFuture.completedFuture(null);
     }
 }

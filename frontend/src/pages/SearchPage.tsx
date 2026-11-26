@@ -63,7 +63,7 @@ export default function SearchPage() {
 
       <div className="card">
         <LogTable logs={results} />
-        {results.length > 0 && (
+        {(results.length > 0 || page > 0) && (
           <div className="pagination">
             <button onClick={() => search(page - 1)} disabled={page === 0 || loading}>← Prev</button>
             <span style={{ color: '#a0aec0' }}>Page {page + 1}</span>

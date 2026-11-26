@@ -1,5 +1,6 @@
 package com.logaggregator.service;
 
+import com.logaggregator.config.LogProperties;
 import com.logaggregator.model.LogEntry;
 import com.logaggregator.model.LogSearchRequest;
 import com.logaggregator.repository.LogRepository;
@@ -7,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,14 +22,16 @@ public class LogService {
 
     private final LogRepository logRepository;
     private final LogVectorStoreService logVectorStoreService;
-    private final EmbeddingService embeddingService;
+    private final ApplicationEventPublisher events;
+    private final LogProperties logProperties;
 
     public LogService(LogRepository logRepository,
                       LogVectorStoreService logVectorStoreService,
-                      EmbeddingService embeddingService) {
+                      ApplicationEventPublisher events, LogProperties logProperties) {
         this.logRepository = logRepository;
         this.logVectorStoreService = logVectorStoreService;
-        this.embeddingService = embeddingService;
+        this.events = events;
+        this.logProperties = logProperties;
     }
 
     @Transactional
@@ -41,21 +45,30 @@ public class LogService {
         List<LogEntry> savedLogs = logRepository.saveAll(logs);
         log.info("Ingested {} logs", savedLogs.size());
 
-        embeddingService.indexLogsAsync(savedLogs);
+        if (logProperties.getAi().isEnabled()) {
+            events.publishEvent(new LogsIngested(savedLogs));
+        }
     }
 
-    @Cacheable(value = "searchResults", key = "#request.toCacheKey()")
+    public record LogsIngested(List<LogEntry> entries) {}
+
+    @Cacheable(value = "searchResults", key = "#request.toCacheKey()", condition = "#request.semanticSearch != true")
     public List<LogEntry> searchLogs(LogSearchRequest request) {
         validateTimeRange(request);
 
+        String keyword = request.getSearchText();
         if (Boolean.TRUE.equals(request.getSemanticSearch())) {
+            logProperties.getAi().requireEnabled();
             String query = resolveSemanticQuery(request);
-            if (query != null && !query.isBlank()) {
+            if (query == null || query.isBlank()) {
+                throw new IllegalArgumentException("A query is required for semantic search");
+            } else {
                 List<LogEntry> semanticResults = logVectorStoreService.semanticSearch(query, request);
                 if (!semanticResults.isEmpty()) {
                     return semanticResults;
                 }
                 log.info("Semantic search returned no results, falling back to keyword search");
+                keyword = keyword == null || keyword.isBlank() ? query : keyword;
             }
         }
 
@@ -66,10 +79,10 @@ public class LogService {
 
         int page = request.getPage() != null && request.getPage() >= 0 ? request.getPage() : 0;
         int size = request.getSize() != null && request.getSize() > 0 ? request.getSize() : 100;
-        int offset = page * size;
+        long offset = (long) page * size;
 
         return logRepository.searchLogs(
-            request.getSearchText(),
+            keyword,
             request.getSource(),
             request.getLevel(),
             startTime,

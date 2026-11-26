@@ -3,6 +3,7 @@ package com.logaggregator.controller;
 import com.logaggregator.dto.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -89,7 +90,7 @@ public class GlobalExceptionHandler {
         response.setMessage(message);
         response.setPath(exchange.getRequest().getPath().value());
         response.setDetails(details);
-        return ResponseEntity.status(status).body(response);
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
     private String mapFieldError(FieldError fieldError) {

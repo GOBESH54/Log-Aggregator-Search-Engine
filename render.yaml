@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: log-aggregator-api
+    runtime: docker
+    region: oregon
+    plan: free
+    healthCheckPath: /actuator/health/readiness
+    buildFilter:
+      paths:
+        - src/**
+        - pom.xml
+        - Dockerfile
+        - .dockerignore
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod,render
+      - key: APP_USERNAME
+        value: admin
+      - key: APP_PASSWORD
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: LOG_AI_ENABLED
+        value: "false"
+      - key: DB_HOST
+        fromDatabase:
+          name: log-aggregator-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: log-aggregator-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: log-aggregator-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: log-aggregator-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: log-aggregator-db
+          property: password
+
+databases:
+  - name: log-aggregator-db
+    region: oregon
+    plan: free
+    postgresMajorVersion: "15"
+    ipAllowList: []

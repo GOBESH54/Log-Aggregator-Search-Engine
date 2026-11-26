@@ -1,0 +1,28 @@
+services:
+  bff:
+    image: node:22-alpine
+    container_name: log-bff
+    working_dir: /app
+    volumes:
+      - ./bff:/app
+    ports:
+      - "3001:3001"
+    command: sh -c "npm install && npm run dev"
+    environment:
+      # Use host.docker.internal to reach Spring Boot running on your Windows machine
+      - SPRING_BASE_URL=http://host.docker.internal:8080
+      - PORT=3001
+
+  frontend:
+    image: node:22-alpine
+    container_name: log-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      - API_PROXY_TARGET=http://bff:3001
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - bff
